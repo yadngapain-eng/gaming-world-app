@@ -1,7 +1,7 @@
 name: gaming_world
 description: Gaming World - Top Up Game, Pulsa & Voucher Termurah
 publish_to: 'none'
-version: 1.4.0+14
+version: 2.7.0+27
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

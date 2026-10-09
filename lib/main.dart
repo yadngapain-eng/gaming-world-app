@@ -12,6 +12,7 @@ import 'services/maintenance_service.dart';
 import 'services/anti_cheat.dart';
 import 'services/fcm_service.dart';
 import 'services/social_notif_service.dart';
+import 'services/game_data_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_layout.dart';
@@ -22,6 +23,14 @@ void main() async {
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
     debugPrint('[App] Firebase initialized');
+
+    // Pre-load game data dari Firestore (paralel, tidak block UI)
+    GameDataService.load().then((_) {
+      debugPrint('[App] GameDataService loaded: ' +
+        GameDataService.allGames.length.toString() + ' games');
+    }).catchError((e) {
+      debugPrint('[App] GameDataService error: ' + e.toString());
+    });
   } catch (e) {
     debugPrint('[App] Firebase error: ' + e.toString());
   }
