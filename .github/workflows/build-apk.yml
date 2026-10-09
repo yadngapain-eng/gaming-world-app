@@ -45,8 +45,21 @@ jobs:
       - name: Generate splash screen
         run: dart run flutter_native_splash:create || true
 
+      - name: Debug icon files
+        run: |
+          echo "=== Icon files ==="
+          ls -la assets/icon/ || echo "No icon dir"
+          echo ""
+          echo "=== Check app_icon.png ==="
+          file assets/icon/app_icon.png || echo "app_icon.png not found"
+
       - name: Generate launcher icons
-        run: dart run flutter_launcher_icons || true
+        run: |
+          dart run flutter_launcher_icons || true
+          echo ""
+          echo "=== Verify generated icons ==="
+          ls -la android/app/src/main/res/mipmap-hdpi/ || echo "no mipmap-hdpi"
+          ls -la android/app/src/main/res/mipmap-xxxhdpi/ || echo "no mipmap-xxxhdpi"
 
       - name: Build APK (release)
         run: flutter build apk --release --split-per-abi
