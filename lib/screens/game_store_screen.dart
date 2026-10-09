@@ -11,6 +11,7 @@ class GameStoreScreen extends StatefulWidget {
 class _GameStoreScreenState extends State<GameStoreScreen> {
   List<Map<String, dynamic>> _games = [];
   bool _loading = true;
+  // ignore: unused_field
   num _markup = 0;
 
   @override

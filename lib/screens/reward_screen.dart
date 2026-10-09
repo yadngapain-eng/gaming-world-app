@@ -63,7 +63,6 @@ class _RewardScreenState extends State<RewardScreen> {
   }
 
   Future<void> _showReferral() async {
-    final uid = RewardService.streamBalance() != null ? '' : '';
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
