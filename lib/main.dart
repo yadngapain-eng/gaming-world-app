@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 
 import 'config/firebase_config.dart';
@@ -23,7 +22,7 @@ void main() async {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
     debugPrint('[App] Firebase initialized');
   } catch (e) {
-    debugPrint('[App] Firebase error: $e');
+    debugPrint('[App] Firebase error: ' + e.toString());
   }
 
   runApp(const GamingWorldApp());
@@ -31,6 +30,7 @@ void main() async {
 
 class GamingWorldApp extends StatefulWidget {
   const GamingWorldApp({super.key});
+
   @override
   State<GamingWorldApp> createState() => _GamingWorldAppState();
 }
@@ -52,10 +52,11 @@ class _GamingWorldAppState extends State<GamingWorldApp> {
   Future<void> _initSecurity() async {
     try {
       final result = await AntiCheat.scan();
-      debugPrint('[App] Security scan: $result');
+      debugPrint('[App] Security scan: ' + result.toString());
       await FcmService.init();
     } catch (e) {
-      debugPrint('[App] Security init error: $e');
+      debugPrint('[App] Security init error: ' + e.toString());
+    }
   }
 
   @override
@@ -110,14 +111,12 @@ class MaintenanceGate extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('\u{1F527}', style: TextStyle(fontSize: 80)),
+                  const Text('MAINTENANCE', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white)),
                   const SizedBox(height: 16),
-                  const Text('Maintenance',
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.white)),
+                  const Text('Kami sedang perbaikan', style: TextStyle(fontSize: 16, color: Colors.white)),
                   const SizedBox(height: 12),
-                  Text(m.message,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 15, color: Colors.white70)),
+                  Text(m.message, textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 14, color: Colors.white70)),
                   const SizedBox(height: 32),
                   ElevatedButton(
                     onPressed: () => context.read<MaintenanceService>().check(),
