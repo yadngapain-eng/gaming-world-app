@@ -70,7 +70,7 @@ class ProfileScreen extends StatelessWidget {
               }),
               _menuItem(context, Icons.help_outline, 'Bantuan', () {}),
               _menuItem(context, Icons.info_outline, 'Tentang', () {}),
-              if (!isGuest) _menuItem(context, Icons.logout, 'Logout', () async {
+              if (!isGuest) if (!isGuest) _menuItem(context, Icons.logout, 'Logout', () async {
                 await FirebaseAuth.instance.signOut();
                 if (context.mounted) Navigator.pushReplacementNamed(context, '/login');
               }, color: Colors.red),
