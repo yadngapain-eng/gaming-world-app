@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version (contoh: 1.0.0)'
+        description: 'Version'
         required: false
         default: '1.0.0'
       changelog:
@@ -13,10 +13,6 @@ on:
         default: 'Update'
   push:
     branches: [ main ]
-    paths:
-      - 'lib/**'
-      - 'pubspec.yaml'
-      - 'android/**'
 
 jobs:
   build:
@@ -42,37 +38,19 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
       
-      - name: Build APK (release)
-        run: flutter build apk --release --split-per-abi
+      - name: Build APK
+        run: flutter build apk --release
       
-      - name: Rename APK
+      - name: Check APK
         run: |
-          mkdir -p build/apk
-          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk build/apk/gaming-world-armv7.apk || true
-          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk build/apk/gaming-world-arm64.apk || true
-          cp build/app/outputs/flutter-apk/app-x86_64-release.apk build/apk/gaming-world-x86_64.apk || true
-          ls -la build/apk/
+          ls -la build/app/outputs/flutter-apk/
       
-      - name: Upload APK (arm64)
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: gaming-world-arm64
-          path: build/apk/gaming-world-arm64.apk
-          if-no-files-found: warn
-      
-      - name: Upload APK (armv7)
-        uses: actions/upload-artifact@v4
-        with:
-          name: gaming-world-armv7
-          path: build/apk/gaming-world-armv7.apk
-          if-no-files-found: warn
-      
-      - name: Upload APK (universal)
-        uses: actions/upload-artifact@v4
-        with:
-          name: gaming-world-universal
+          name: gaming-world-apk
           path: build/app/outputs/flutter-apk/app-release.apk
-          if-no-files-found: warn
+          if-no-files-found: error
       
       - name: Create Release
         if: github.event_name == 'workflow_dispatch'
@@ -80,13 +58,7 @@ jobs:
         with:
           tag_name: v${{ github.event.inputs.version }}-${{ github.run_number }}
           name: Release v${{ github.event.inputs.version }}
-          body: |
-            ${{ github.event.inputs.changelog }}
-            
-            Build: #${{ github.run_number }}
-          files: |
-            build/apk/gaming-world-arm64.apk
-            build/apk/gaming-world-armv7.apk
-            build/app/outputs/flutter-apk/app-release.apk
+          body: ${{ github.event.inputs.changelog }}
+          files: build/app/outputs/flutter-apk/app-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
