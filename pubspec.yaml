@@ -1,5 +1,6 @@
 name: gaming_world
-description: Gaming World - Top Up Game
+description: Gaming World - Top Up Game, Pulsa & Voucher Termurah
+publish_to: 'none'
 version: 1.0.0+1
 
 environment:
