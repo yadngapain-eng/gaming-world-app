@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'achievement_screen.dart';
+import 'reward_screen.dart';
+import 'game_store_screen.dart';
 import '../widgets/legal_dialogs.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -65,7 +67,13 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 16),
               
               // Menu
-              _menuItem(context, Icons.emoji_events, 'Achievement', () {
+              _menuItem(context, Icons.monetization_on, 'Kumpulkan Koin', () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const RewardScreen()));
+                }),
+                _menuItem(context, Icons.shopping_cart, 'Tukar Hadiah', () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const GameStoreScreen()));
+                }),
+                _menuItem(context, Icons.emoji_events, 'Achievement', () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const AchievementScreen()));
                 }),
                 _menuItem(context, Icons.person, 'Ganti Nama', () {
