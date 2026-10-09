@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'achievement_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -63,7 +64,10 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 16),
               
               // Menu
-              _menuItem(context, Icons.person, 'Ganti Nama', () {
+              _menuItem(context, Icons.emoji_events, 'Achievement', () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const AchievementScreen()));
+                }),
+                _menuItem(context, Icons.person, 'Ganti Nama', () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('🚧 Fitur dikembangkan')),
                 );

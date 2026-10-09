@@ -5,6 +5,7 @@ import '../models/game_model.dart';
 import 'topup_screen.dart';
 import 'minigame_screen.dart';
 import 'chat_screen.dart';
+import 'achievement_screen.dart';
 import 'rewards_screen.dart';
 import 'orders_screen.dart';
 import 'profile_screen.dart';

@@ -10,6 +10,8 @@ import 'services/worker_service.dart';
 import 'services/notification_service.dart';
 import 'services/coin_sync_service.dart';
 import 'services/maintenance_service.dart';
+import 'services/anti_cheat.dart';
+import 'services/fcm_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
@@ -44,6 +46,16 @@ class _GamingWorldAppState extends State<GamingWorldApp> {
     _notifService.init();
     _coinSync.start();
     _maintenance.startPeriodicCheck();
+    _initSecurity();
+  }
+
+  Future<void> _initSecurity() async {
+    try {
+      final result = await AntiCheat.scan();
+      debugPrint('[App] Security scan: $result');
+      await FcmService.init();
+    } catch (e) {
+      debugPrint('[App] Security init error: $e');
   }
 
   @override
