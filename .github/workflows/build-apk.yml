@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version (contoh: 1.0.0)'
+        description: 'Version'
         required: false
         default: '1.0.0'
       changelog:
@@ -35,31 +35,27 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Setup keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/release-key.jks
+          cat > android/key.properties <<EOF
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=release-key.jks
+          EOF
+          echo "=== Keystore setup ==="
+          ls -la android/app/release-key.jks
+          cat android/key.properties
 
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Flutter Analyze (check errors)
+      - name: Flutter Analyze
         run: flutter analyze --no-fatal-infos --no-fatal-warnings || true
 
-      - name: Generate splash screen
-        run: dart run flutter_native_splash:create || true
-
-      - name: Debug icon files
-        run: |
-          echo "=== Icon files ==="
-          ls -la assets/icon/ || echo "No icon dir"
-          echo ""
-          echo "=== Check app_icon.png ==="
-          file assets/icon/app_icon.png || echo "app_icon.png not found"
-
       - name: Generate launcher icons
-        run: |
-          dart run flutter_launcher_icons || true
-          echo ""
-          echo "=== Verify generated icons ==="
-          ls -la android/app/src/main/res/mipmap-hdpi/ || echo "no mipmap-hdpi"
-          ls -la android/app/src/main/res/mipmap-xxxhdpi/ || echo "no mipmap-xxxhdpi"
+        run: dart run flutter_launcher_icons || true
 
       - name: Build APK (release)
         run: flutter build apk --release --split-per-abi
@@ -92,20 +88,3 @@ jobs:
           name: gaming-world-universal
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: warn
-
-      - name: Create Release
-        if: github.event_name == 'workflow_dispatch'
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: v${{ github.event.inputs.version }}-${{ github.run_number }}
-          name: Release v${{ github.event.inputs.version }}
-          body: |
-            ${{ github.event.inputs.changelog }}
-
-            Build: #${{ github.run_number }}
-          files: |
-            build/apk/gaming-world-arm64.apk
-            build/apk/gaming-world-armv7.apk
-            build/app/outputs/flutter-apk/app-release.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
