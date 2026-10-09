@@ -1,10 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
-import '../config/app_config.dart';
 import '../services/game_data_service.dart';
 import '../services/order_telegram_service.dart';
 
@@ -297,7 +293,6 @@ class _TopupScreenState extends State<TopupScreen> {
     setState(() => _submitting = true);
 
     try {
-      final basePrice = (_selectedProduct!['price'] ?? 0) as num;
       final finalPrice = _getFinalPrice(_selectedProduct!);
       final orderId = 'YDS' + DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase();
 
