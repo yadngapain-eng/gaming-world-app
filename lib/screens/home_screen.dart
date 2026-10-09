@@ -8,8 +8,23 @@ import 'minigame_screen.dart';
 import 'topup_list_screen.dart';
 import 'minigame_list_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  Key _streamKey = UniqueKey();
+
+  void _refresh() {
+    setState(() {
+      _streamKey = UniqueKey();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Data di-refresh'), duration: Duration(seconds: 1)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +35,7 @@ class HomeScreen extends StatelessWidget {
         foregroundColor: Colors.white,
         actions: [
           StreamBuilder<num>(
+            key: _streamKey,
             stream: RewardService.streamBalance(),
             builder: (context, snap) {
               final balance = snap.data ?? 0;
@@ -46,7 +62,7 @@ class HomeScreen extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => (context as Element).markNeedsBuild(),
+            onPressed: _refresh,
           ),
         ],
       ),

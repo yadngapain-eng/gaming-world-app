@@ -17,6 +17,18 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _showEmailForm = false;
   String _error = '';
 
+  @override
+  void initState() {
+    super.initState();
+    // Guard: kalau sudah login (bukan anonymous), langsung ke home
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null && !user.isAnonymous && mounted) {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+    });
+  }
+
   Future<void> _loginAnonymous() async {
     setState(() { _loading = true; _error = ''; });
     final ok = await context.read<AuthService>().loginAnonymous();

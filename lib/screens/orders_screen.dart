@@ -49,9 +49,26 @@ class OrdersScreen extends StatelessWidget {
           
           final orders = snap.data!.docs.toList();
           orders.sort((a, b) {
-            final aDate = (a.data() as Map)['date'] ?? '';
-            final bDate = (b.data() as Map)['date'] ?? '';
-            return bDate.toString().compareTo(aDate.toString());
+            final aData = a.data() as Map<String, dynamic>;
+            final bData = b.data() as Map<String, dynamic>;
+            final aDate = aData['createdAt'] ?? aData['date'] ?? '';
+            final bDate = bData['createdAt'] ?? bData['date'] ?? '';
+            DateTime aDt, bDt;
+            try {
+              aDt = aDate is Timestamp
+                  ? aDate.toDate()
+                  : DateTime.parse(aDate.toString());
+            } catch (_) {
+              aDt = DateTime.fromMillisecondsSinceEpoch(0);
+            }
+            try {
+              bDt = bDate is Timestamp
+                  ? bDate.toDate()
+                  : DateTime.parse(bDate.toString());
+            } catch (_) {
+              bDt = DateTime.fromMillisecondsSinceEpoch(0);
+            }
+            return bDt.compareTo(aDt);
           });
           
           return ListView.builder(

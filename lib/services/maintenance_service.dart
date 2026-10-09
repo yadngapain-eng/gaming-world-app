@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MaintenanceService extends ChangeNotifier {
   bool _isMaintenance = false;
   String _message = 'Kami sedang melakukan perbaikan sistem. Mohon coba lagi beberapa saat lagi.';
+  Timer? _timer;
 
   bool get isMaintenance => _isMaintenance;
   String get message => _message;
@@ -18,6 +20,8 @@ class MaintenanceService extends ChangeNotifier {
         final data = doc.data() ?? {};
         _isMaintenance = data['enabled'] == true;
         if (data['message'] != null) _message = data['message'];
+      } else {
+        _isMaintenance = false;
       }
       notifyListeners();
     } catch (e) {
@@ -27,11 +31,18 @@ class MaintenanceService extends ChangeNotifier {
 
   void startPeriodicCheck() {
     check();
-    // Cek tiap 60 detik
-    Future.doWhile(() async {
-      await Future.delayed(const Duration(seconds: 60));
-      await check();
-      return true;
-    });
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 60), (_) => check());
+  }
+
+  void stopPeriodicCheck() {
+    _timer?.cancel();
+    _timer = null;
+  }
+
+  @override
+  void dispose() {
+    stopPeriodicCheck();
+    super.dispose();
   }
 }

@@ -56,6 +56,10 @@ class _GamingWorldAppState extends State<GamingWorldApp> {
     _coinSync.start();
     _maintenance.startPeriodicCheck();
     _initSecurity();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) SocialNotifService.start(context);
+    });
   }
 
   Future<void> _initSecurity() async {
@@ -76,10 +80,6 @@ class _GamingWorldAppState extends State<GamingWorldApp> {
 
   @override
   Widget build(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      SocialNotifService.start(context);
-    });
-
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService()),

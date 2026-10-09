@@ -33,9 +33,20 @@ class _MinigameScreenState extends State<MinigameScreen> {
 
       final res = await http.post(
         Uri.parse('${AppConfig.apiBase}/minigame/token'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'userId': user.uid, 'gameId': widget.game['id']}),
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+        body: jsonEncode({
+          'userId': user.uid,
+          'gameId': widget.game['id'],
+          'requestedAt': DateTime.now().toIso8601String(),
+        }),
       ).timeout(const Duration(seconds: 15));
+
+      if (res.statusCode != 200) {
+        throw Exception('Server error: HTTP ${res.statusCode}');
+      }
 
       final data = jsonDecode(res.body);
       if (data['ok'] == true && data['token'] != null) {
