@@ -8,6 +8,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
+    final isGuest = user == null || user.isAnonymous;
     if (user == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Profil')),
@@ -69,7 +70,7 @@ class ProfileScreen extends StatelessWidget {
               }),
               _menuItem(context, Icons.help_outline, 'Bantuan', () {}),
               _menuItem(context, Icons.info_outline, 'Tentang', () {}),
-              _menuItem(context, Icons.logout, 'Logout', () async {
+              if (!isGuest) _menuItem(context, Icons.logout, 'Logout', () async {
                 await FirebaseAuth.instance.signOut();
                 if (context.mounted) Navigator.pushReplacementNamed(context, '/login');
               }, color: Colors.red),

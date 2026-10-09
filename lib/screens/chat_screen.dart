@@ -16,7 +16,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final List<Map<String, dynamic>> _messages = [];
   bool _loading = false;
   String _ticketId = '';
-  
+
   @override
   void initState() {
     super.initState();
@@ -24,15 +24,15 @@ class _ChatScreenState extends State<ChatScreen> {
     _ticketId = 'CHAT-${user?.uid.substring(0, 8) ?? "guest"}-${DateTime.now().millisecondsSinceEpoch}';
     _messages.add({
       'role': 'assistant',
-      'text': 'Hai kak! 👋 Ada yang bisa aku bantu hari ini? 😊',
+      'text': 'Hai kak! \u{1F44B} Ada yang bisa aku bantu hari ini? \u{1F60A}',
       'time': DateTime.now().toIso8601String(),
     });
   }
-  
+
   Future<void> _send() async {
     final text = _controller.text.trim();
     if (text.isEmpty || _loading) return;
-    
+
     _controller.clear();
     setState(() {
       _messages.add({
@@ -43,23 +43,23 @@ class _ChatScreenState extends State<ChatScreen> {
       _loading = true;
     });
     _scrollDown();
-    
+
     try {
       final user = FirebaseAuth.instance.currentUser;
       final res = await http.post(
         Uri.parse('${AppConfig.apiBase}/ai-reply'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
+        headers: {'Content-Type': 'application/json; charset=utf-8'},
+        body: utf8.encode(jsonEncode({
           'ticketId': _ticketId,
           'userMessage': text,
           'userName': user?.displayName ?? 'User',
           'conversationHistory': _messages,
-        }),
+        })),
       ).timeout(const Duration(seconds: 30));
-      
-      final data = jsonDecode(res.body);
+
+      final data = jsonDecode(utf8.decode(res.bodyBytes));
       final reply = data['reply'] ?? 'Maaf, aku tidak bisa balas sekarang.';
-      
+
       setState(() {
         _messages.add({
           'role': 'assistant',
@@ -73,14 +73,14 @@ class _ChatScreenState extends State<ChatScreen> {
       setState(() {
         _messages.add({
           'role': 'assistant',
-          'text': '❌ Error koneksi. Coba lagi ya.',
+          'text': '\u274C Error koneksi. Coba lagi ya.',
           'time': DateTime.now().toIso8601String(),
         });
         _loading = false;
       });
     }
   }
-  
+
   void _scrollDown() {
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
@@ -92,14 +92,14 @@ class _ChatScreenState extends State<ChatScreen> {
       }
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Row(
           children: [
-            Text('🤖 ', style: TextStyle(fontSize: 20)),
+            Text('\u{1F916} ', style: TextStyle(fontSize: 20)),
             Text('Chat AI'),
           ],
         ),
@@ -124,7 +124,7 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
   }
-  
+
   Widget _bubble(Map<String, dynamic> m) {
     final isUser = m['role'] == 'user';
     return Align(
@@ -150,7 +150,7 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
   }
-  
+
   Widget _typingIndicator() {
     return Align(
       alignment: Alignment.centerLeft,
@@ -172,7 +172,7 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
   }
-  
+
   Widget _inputBar() {
     return Container(
       padding: const EdgeInsets.all(12),

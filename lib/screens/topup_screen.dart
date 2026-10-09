@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
 import '../models/game_model.dart';
 import '../models/payment_model.dart';
+import '../services/order_telegram_service.dart';
 
 class TopupScreen extends StatefulWidget {
   final Game game;
@@ -246,6 +247,19 @@ class _TopupScreenState extends State<TopupScreen> {
                   : _paymentPicker(payments),
                 const SizedBox(height: 20),
                 
+                
+                // ===== BAYAR DENGAN KOIN =====
+                if (_selectedProduct != null && _selectedPayment != null) ...[
+                  const SizedBox(height: 20),
+                  const Text('Atau Bayar dengan Koin',
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                  const SizedBox(height: 8),
+                  _koinButton(),
+                  const SizedBox(height: 16),
+                  const Center(child: Text('--- ATAU ---',
+                    style: TextStyle(color: Colors.grey, fontSize: 12))),
+                ],
+                
                 // Upload bukti
                 if (_selectedPayment != null) ...[
                   const Text('Upload Bukti Transfer', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
@@ -282,6 +296,151 @@ class _TopupScreenState extends State<TopupScreen> {
     );
   }
   
+
+  Widget _koinButton() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return const SizedBox.shrink();
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('users').doc(user.uid).snapshots(),
+      builder: (context, snap) {
+        final balance = ((snap.data?.data() as Map?)?['balance'] ?? 0) as num;
+        final hargaFinal = (_selectedProduct!['price'] as num) + (_selectedPayment?.fee ?? 0);
+        final koinDibutuhkan = hargaFinal;
+        final bisa = balance >= koinDibutuhkan;
+        return Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: [Color(0xFFfef3c7), Color(0xFFfde68a)]),
+            border: Border.all(color: const Color(0xFFf59e0b), width: 2),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Saldo Koin',
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold,
+                          color: Color(0xFF78350f))),
+                      Text('\u{1FA99} $balance',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900,
+                          color: Color(0xFF92400e))),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Text('Butuh',
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold,
+                          color: Color(0xFF78350f))),
+                      Text('\u{1FA99} $koinDibutuhkan',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900,
+                          color: Color(0xFF92400e))),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: !bisa ? null : () => _payWithKoin(koinDibutuhkan),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: bisa ? const Color(0xFFf59e0b) : const Color(0xFF94a3b8),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: Text(
+                    bisa
+                      ? '\u{1FA99} Bayar $koinDibutuhkan Koin (Instan)'
+                      : 'Koin Kurang ${koinDibutuhkan - balance}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                bisa ? 'Tanpa upload bukti transfer' : 'Kumpulkan koin lagi',
+                style: const TextStyle(fontSize: 11, color: Color(0xFF78350f)),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _payWithKoin(num koinDibutuhkan) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    setState(() { _loading = true; _error = ''; });
+    try {
+      final orderId = 'YDS' + DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase();
+      final userData = <String, dynamic>{};
+      _controllers.forEach((k, c) => userData[k] = c.text.trim());
+
+      await FirebaseFirestore.instance.runTransaction((tx) async {
+        final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+        final userDoc = await tx.get(userRef);
+        final currentBalance = ((userDoc.data()?['balance'] ?? 0) as num);
+        if (currentBalance < koinDibutuhkan) {
+          throw Exception('Saldo tidak cukup');
+        }
+        tx.update(userRef, {
+          'balance': currentBalance - koinDibutuhkan,
+          'totalSpent': (((userDoc.data()?['totalSpent'] ?? 0) as num) + koinDibutuhkan),
+          'updatedAt': DateTime.now().toIso8601String(),
+        });
+        tx.set(FirebaseFirestore.instance.collection('orders').doc(orderId), {
+          'id': orderId,
+          'userId': user.uid,
+          'item': widget.game.name,
+          'itemIcon': widget.game.icon,
+          'product': _selectedProduct!['name'],
+          'price': _selectedProduct!['price'],
+          'total': koinDibutuhkan,
+          'userData': userData,
+          'payment': 'Koin',
+          'paymentMethod': 'koin',
+          'koinDipakai': koinDibutuhkan,
+          'status': 'success',
+          'paidWithCoins': true,
+          'date': DateTime.now().toIso8601String(),
+        });
+      });
+
+      // Notif Telegram
+      try {
+        await OrderTelegramService.notifyOrder({
+          'id': orderId,
+          'userId': user.uid,
+          'item': widget.game.name,
+          'product': _selectedProduct!['name'],
+          'total': koinDibutuhkan,
+          'payment': 'Koin',
+          'koinDipakai': koinDibutuhkan,
+          'userData': userData,
+          'status': 'success',
+        });
+      } catch (_) {}
+
+      if (!mounted) return;
+      setState(() {
+        _orderId = orderId;
+        _step = 3;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = 'Gagal bayar koin: $e';
+        _loading = false;
+      });
+    }
+  }
+
   Widget _productPicker() {
     // Dummy products — nanti bisa dari Firestore
     final products = [
