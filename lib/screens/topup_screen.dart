@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/game_data_service.dart';
-import '../services/order_telegram_service.dart';
 import '../services/reward_service.dart';
+import '../services/order_telegram_service.dart';
 
 class TopupScreen extends StatefulWidget {
   final String gameId;
@@ -30,16 +30,13 @@ class _TopupScreenState extends State<TopupScreen> {
   }
 
   Future<void> _load() async {
-    // Pastikan data game loaded
     if (!GameDataService.isLoaded) {
       await GameDataService.load();
     }
 
-    final games = GameDataService.allGames;
-    _game = games[widget.gameId];
+    _game = GameDataService.getGame(widget.gameId);
     _products = GameDataService.getProducts(widget.gameId);
 
-    // Load payments dari Firestore
     try {
       final payDoc = await FirebaseFirestore.instance.collection('config').doc('payments').get();
       if (payDoc.exists) {
@@ -100,7 +97,9 @@ class _TopupScreenState extends State<TopupScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Header
+          // ============================================
+          //  HEADER GAME
+          // ============================================
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -142,7 +141,9 @@ class _TopupScreenState extends State<TopupScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Data Akun
+          // ============================================
+          //  DATA AKUN
+          // ============================================
           if (fields.isNotEmpty) ...[
             const Text('Data Akun', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
             const SizedBox(height: 8),
@@ -164,7 +165,9 @@ class _TopupScreenState extends State<TopupScreen> {
             }).toList(),
           ],
 
-          // Produk
+          // ============================================
+          //  PRODUK
+          // ============================================
           const Text('Pilih Nominal', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
           const SizedBox(height: 8),
           GridView.builder(
@@ -218,9 +221,88 @@ class _TopupScreenState extends State<TopupScreen> {
               );
             },
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
-          // Payment
+          // ============================================
+          //  BAYAR DENGAN KOIN
+          // ============================================
+          if (_selectedProduct != null) ...[
+            StreamBuilder<num>(
+              stream: RewardService.streamBalance(),
+              builder: (context, snap) {
+                final saldo = snap.data ?? 0;
+                final koinDibutuhkan = _getFinalPrice(_selectedProduct!);
+                final bisa = saldo >= koinDibutuhkan;
+
+                return Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [Color(0xFFfef3c7), Color(0xFFfde68a)]),
+                    border: Border.all(color: const Color(0xFFf59e0b), width: 2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Saldo Koin',
+                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF78350f))),
+                              Text('\u{1F4B0} ' + saldo.toStringAsFixed(0),
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF92400e))),
+                            ],
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              const Text('Butuh',
+                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF78350f))),
+                              Text('\u{1F4B0} ' + koinDibutuhkan.toStringAsFixed(0),
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF92400e))),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: !bisa ? null : () => _payWithKoin(koinDibutuhkan),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: bisa ? const Color(0xFFf59e0b) : const Color(0xFF94a3b8),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          child: Text(
+                            bisa
+                              ? '\u{1F4B0} Bayar ' + koinDibutuhkan.toStringAsFixed(0) + ' Koin (Instan)'
+                              : 'Koin Kurang ' + (koinDibutuhkan - saldo).toStringAsFixed(0),
+                            style: const TextStyle(fontWeight: FontWeight.w900),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        bisa ? 'Tanpa upload bukti transfer' : 'Kumpulkan koin lagi',
+                        style: const TextStyle(fontSize: 11, color: Color(0xFF78350f)),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            const Center(child: Text('— ATAU —', style: TextStyle(color: Colors.grey, fontSize: 12))),
+            const SizedBox(height: 16),
+          ],
+
+          // ============================================
+          //  PEMBAYARAN MANUAL
+          // ============================================
           const Text('Pilih Pembayaran', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
           const SizedBox(height: 8),
           ..._payments.map((p) {
@@ -264,89 +346,9 @@ class _TopupScreenState extends State<TopupScreen> {
 
           const SizedBox(height: 20),
 
-          
-          const SizedBox(height: 12),
-
-          // ===== BAYAR DENGAN KOIN =====
-          StreamBuilder<num>(
-            stream: RewardService.streamBalance(),
-            builder: (context, snap) {
-              final saldo = snap.data ?? 0;
-              final koinDibutuhkan = _selectedProduct != null ? _getFinalPrice(_selectedProduct!) : 0;
-              final bisa = saldo >= koinDibutuhkan;
-
-              if (_selectedProduct == null) return const SizedBox.shrink();
-
-              return Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [Color(0xFFfef3c7), Color(0xFFfde68a)]),
-                      border: Border.all(color: const Color(0xFFf59e0b), width: 2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Saldo Koin',
-                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF78350f))),
-                                Text('\u{1F4B0} ' + saldo.toStringAsFixed(0),
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF92400e))),
-                              ],
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                const Text('Butuh',
-                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF78350f))),
-                                Text('\u{1F4B0} ' + koinDibutuhkan.toStringAsFixed(0),
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF92400e))),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: !bisa ? null : () => _payWithKoin(koinDibutuhkan),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: bisa ? const Color(0xFFf59e0b) : const Color(0xFF94a3b8),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                            child: Text(
-                              bisa
-                                ? '\u{1F4B0} Bayar ' + koinDibutuhkan.toStringAsFixed(0) + ' Koin (Instan)'
-                                : 'Koin Kurang ' + (koinDibutuhkan - saldo).toStringAsFixed(0),
-                              style: const TextStyle(fontWeight: FontWeight.w900),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          bisa ? 'Tanpa upload bukti transfer' : 'Kumpulkan koin lagi',
-                          style: const TextStyle(fontSize: 11, color: Color(0xFF78350f)),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Center(child: Text('— ATAU —', style: TextStyle(color: Colors.grey, fontSize: 12))),
-                  const SizedBox(height: 12),
-                ],
-              );
-            },
-          ),
-
-// Submit
+          // ============================================
+          //  SUBMIT ORDER (bayar manual)
+          // ============================================
           ElevatedButton(
             onPressed: (_selectedProduct == null || _selectedPayment == null || _submitting)
                 ? null
@@ -366,11 +368,138 @@ class _TopupScreenState extends State<TopupScreen> {
     );
   }
 
+  // ============================================
+  //  BAYAR DENGAN KOIN
+  // ============================================
+  Future<void> _payWithKoin(num koinDibutuhkan) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Login dulu')));
+      return;
+    }
+
+    // Validasi form
+    final fields = (_game!['fields'] as List?) ?? [];
+    for (final f in fields) {
+      final fid = f['id']?.toString() ?? '';
+      if ((_userData[fid] ?? '').isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Isi ' + (f['label']?.toString() ?? fid) + ' dulu')),
+        );
+        return;
+      }
+    }
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Bayar dengan Koin?'),
+        content: Text('Bayar ' + koinDibutuhkan.toStringAsFixed(0) + ' koin?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Bayar')),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _submitting = true);
+
+    try {
+      final orderId = 'YDS' + DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase();
+
+      await FirebaseFirestore.instance.runTransaction((tx) async {
+        final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+        final userDoc = await tx.get(userRef);
+        final saldoSekarang = ((userDoc.data()?['balance'] ?? 0) as num);
+
+        if (saldoSekarang < koinDibutuhkan) {
+          throw Exception('Saldo tidak cukup');
+        }
+
+        tx.update(userRef, {
+          'balance': saldoSekarang - koinDibutuhkan,
+          'totalSpent': (((userDoc.data()?['totalSpent'] ?? 0) as num) + koinDibutuhkan),
+          'updatedAt': DateTime.now().toIso8601String(),
+        });
+
+        tx.set(FirebaseFirestore.instance.collection('orders').doc(orderId), {
+          'id': orderId,
+          'userId': user.uid,
+          'item': _game!['name'],
+          'product': _selectedProduct!['name'],
+          'price': koinDibutuhkan,
+          'total': koinDibutuhkan,
+          'userData': _userData,
+          'payment': 'Koin',
+          'paymentMethod': 'koin',
+          'koinDipakai': koinDibutuhkan,
+          'status': 'success',
+          'paidWithCoins': true,
+          'date': DateTime.now().toIso8601String(),
+          'createdAt': DateTime.now().toIso8601String(),
+        });
+      });
+
+      try {
+        await OrderTelegramService.notifyOrder({
+          'id': orderId,
+          'userId': user.uid,
+          'item': _game!['name'],
+          'product': _selectedProduct!['name'],
+          'total': koinDibutuhkan,
+          'payment': 'Koin',
+          'koinDipakai': koinDibutuhkan,
+          'userData': _userData,
+          'status': 'success',
+        });
+      } catch (_) {}
+
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('\u2705 Berhasil'),
+          content: Text('Order ' + orderId + ' berhasil. ' + koinDibutuhkan.toStringAsFixed(0) + ' koin terpakai.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pop(context);
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ' + e.toString())));
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  // ============================================
+  //  SUBMIT ORDER (bayar manual)
+  // ============================================
   Future<void> _submitOrder() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Login dulu')));
       return;
+    }
+
+    final fields = (_game!['fields'] as List?) ?? [];
+    for (final f in fields) {
+      final fid = f['id']?.toString() ?? '';
+      if ((_userData[fid] ?? '').isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Isi ' + (f['label']?.toString() ?? fid) + ' dulu')),
+        );
+        return;
+      }
     }
 
     setState(() => _submitting = true);
@@ -395,7 +524,6 @@ class _TopupScreenState extends State<TopupScreen> {
 
       await FirebaseFirestore.instance.collection('orders').doc(orderId).set(order);
 
-      // Notif Telegram
       try {
         await OrderTelegramService.notifyOrder(order);
       } catch (_) {}
@@ -406,7 +534,7 @@ class _TopupScreenState extends State<TopupScreen> {
         context: context,
         builder: (_) => AlertDialog(
           title: const Text('\u2705 Berhasil'),
-          content: Text('Order $orderId berhasil dibuat. Total: Rp ${_fmt(finalPrice)}'),
+          content: Text('Order ' + orderId + ' berhasil dibuat. Total: Rp ' + _fmt(finalPrice)),
           actions: [
             TextButton(
               onPressed: () {
