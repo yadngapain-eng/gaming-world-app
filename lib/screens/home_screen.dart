@@ -3,6 +3,11 @@ import 'package:provider/provider.dart';
 import '../services/firestore_service.dart';
 import '../models/game_model.dart';
 import 'topup_screen.dart';
+import 'minigame_screen.dart';
+import 'chat_screen.dart';
+import 'rewards_screen.dart';
+import 'orders_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,9 +25,16 @@ class _HomeScreenState extends State<HomeScreen> {
         index: _index,
         children: const [
           _HomeTab(),
-          _OrdersTab(),
-          _ProfileTab(),
+          OrdersScreen(),
+          ProfileScreen(),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatScreen()));
+        },
+        backgroundColor: const Color(0xFF7c3aed),
+        child: const Icon(Icons.chat, color: Colors.white),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
@@ -47,6 +59,14 @@ class _HomeTab extends StatelessWidget {
         title: const Text('Gaming World'),
         backgroundColor: const Color(0xFF7c3aed),
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const RewardsScreen()));
+            },
+            icon: const Icon(Icons.card_giftcard),
+          ),
+        ],
       ),
       body: Consumer<FirestoreService>(
         builder: (context, fs, _) {
@@ -73,9 +93,17 @@ class _HomeTab extends StatelessWidget {
                   final g = games[i];
                   return InkWell(
                     onTap: () {
+                      // Buka top up
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => TopupScreen(game: g)),
+                      );
+                    },
+                    onLongPress: () {
+                      // Long press buka mini game
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => MinigameScreen(game: g.toMap())),
                       );
                     },
                     borderRadius: BorderRadius.circular(16),
@@ -98,7 +126,7 @@ class _HomeTab extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 4),
-                          const Text('Top Up', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                          const Text('Tap = Top Up • Hold = Main', style: TextStyle(fontSize: 9, color: Colors.grey)),
                         ],
                       ),
                     ),
@@ -109,36 +137,6 @@ class _HomeTab extends StatelessWidget {
           );
         },
       ),
-    );
-  }
-}
-
-class _OrdersTab extends StatelessWidget {
-  const _OrdersTab();
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Pesanan Saya'),
-        backgroundColor: const Color(0xFF7c3aed),
-        foregroundColor: Colors.white,
-      ),
-      body: const Center(child: Text('Belum ada pesanan')),
-    );
-  }
-}
-
-class _ProfileTab extends StatelessWidget {
-  const _ProfileTab();
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profil'),
-        backgroundColor: const Color(0xFF7c3aed),
-        foregroundColor: Colors.white,
-      ),
-      body: const Center(child: Text('Profil')),
     );
   }
 }
