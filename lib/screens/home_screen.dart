@@ -5,6 +5,8 @@ import '../models/game_model.dart';
 import 'topup_screen.dart';
 import 'minigame_screen.dart';
 import 'chat_screen.dart';
+import '../widgets/live_users_counter.dart';
+import '../widgets/floating_chat_button.dart';
 import 'rewards_screen.dart';
 import 'orders_screen.dart';
 import 'profile_screen.dart';
@@ -60,6 +62,10 @@ class _HomeTab extends StatelessWidget {
         backgroundColor: const Color(0xFF7c3aed),
         foregroundColor: Colors.white,
         actions: [
+            const Padding(
+              padding: EdgeInsets.only(right: 8),
+              child: Center(child: LiveUsersCounter()),
+            ),
           IconButton(
             onPressed: () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const RewardsScreen()));
@@ -68,7 +74,9 @@ class _HomeTab extends StatelessWidget {
           ),
         ],
       ),
-      body: Consumer<FirestoreService>(
+      body: Stack(
+          children: [
+            Consumer<FirestoreService>(
         builder: (context, fs, _) {
           return StreamBuilder<List<Map<String, dynamic>>>(
             stream: fs.streamMinigames(),

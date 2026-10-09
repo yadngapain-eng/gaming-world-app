@@ -10,6 +10,7 @@ import 'services/notification_service.dart';
 import 'services/coin_sync_service.dart';
 import 'services/maintenance_service.dart';
 import 'services/anti_cheat.dart';
+import 'services/social_notif_service.dart';
 import 'services/fcm_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
@@ -67,6 +68,9 @@ class _GamingWorldAppState extends State<GamingWorldApp> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SocialNotifService.start(context);
+    });
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService()),

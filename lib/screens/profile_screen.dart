@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'achievement_screen.dart';
+import '../widgets/legal_dialogs.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -72,8 +73,10 @@ class ProfileScreen extends StatelessWidget {
                   const SnackBar(content: Text('🚧 Fitur dikembangkan')),
                 );
               }),
-              _menuItem(context, Icons.help_outline, 'Bantuan', () {}),
-              _menuItem(context, Icons.info_outline, 'Tentang', () {}),
+              _menuItem(context, Icons.help_outline, 'Bantuan', () => LegalDialogs.showHelp(context)),
+              _menuItem(context, Icons.info_outline, 'Tentang', () => LegalDialogs.showAbout(context)),
+                _menuItem(context, Icons.privacy_tip_outlined, 'Kebijakan Privasi', () => LegalDialogs.showPrivacy(context)),
+                _menuItem(context, Icons.description_outlined, 'Syarat & Ketentuan', () => LegalDialogs.showTerms(context)),
               if (!isGuest) if (!isGuest) _menuItem(context, Icons.logout, 'Logout', () async {
                 await FirebaseAuth.instance.signOut();
                 if (context.mounted) Navigator.pushReplacementNamed(context, '/login');
