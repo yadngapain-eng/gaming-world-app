@@ -59,7 +59,7 @@ class ProfileScreen extends StatelessWidget {
               // Stats
               Row(
                 children: [
-                  Expanded(child: _statCard('🪙', '${data['balance'] ?? 0}', 'Koin')),
+                  Expanded(child: _statCard('', '${data['balance'] ?? 0}', 'Koin')),
                   const SizedBox(width: 12),
                   Expanded(child: _statCard('💰', 'Rp ${data['totalSpent'] ?? 0}', 'Belanja')),
                 ],

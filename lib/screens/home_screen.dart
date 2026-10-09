@@ -34,7 +34,7 @@ class HomeScreen extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text('\u{1FA99}', style: TextStyle(fontSize: 14)),
+                      const Text('\u{1F4B0}', style: TextStyle(fontSize: 14)),
                       const SizedBox(width: 4),
                       Text(balance.toStringAsFixed(0),
                         style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),

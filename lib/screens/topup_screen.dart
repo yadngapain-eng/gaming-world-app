@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/game_data_service.dart';
 import '../services/order_telegram_service.dart';
+import '../services/reward_service.dart';
 
 class TopupScreen extends StatefulWidget {
   final String gameId;
@@ -263,7 +264,89 @@ class _TopupScreenState extends State<TopupScreen> {
 
           const SizedBox(height: 20),
 
-          // Submit
+          
+          const SizedBox(height: 12),
+
+          // ===== BAYAR DENGAN KOIN =====
+          StreamBuilder<num>(
+            stream: RewardService.streamBalance(),
+            builder: (context, snap) {
+              final saldo = snap.data ?? 0;
+              final koinDibutuhkan = _selectedProduct != null ? _getFinalPrice(_selectedProduct!) : 0;
+              final bisa = saldo >= koinDibutuhkan;
+
+              if (_selectedProduct == null) return const SizedBox.shrink();
+
+              return Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(colors: [Color(0xFFfef3c7), Color(0xFFfde68a)]),
+                      border: Border.all(color: const Color(0xFFf59e0b), width: 2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Saldo Koin',
+                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF78350f))),
+                                Text('\u{1F4B0} ' + saldo.toStringAsFixed(0),
+                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF92400e))),
+                              ],
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                const Text('Butuh',
+                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF78350f))),
+                                Text('\u{1F4B0} ' + koinDibutuhkan.toStringAsFixed(0),
+                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF92400e))),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: !bisa ? null : () => _payWithKoin(koinDibutuhkan),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: bisa ? const Color(0xFFf59e0b) : const Color(0xFF94a3b8),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            child: Text(
+                              bisa
+                                ? '\u{1F4B0} Bayar ' + koinDibutuhkan.toStringAsFixed(0) + ' Koin (Instan)'
+                                : 'Koin Kurang ' + (koinDibutuhkan - saldo).toStringAsFixed(0),
+                              style: const TextStyle(fontWeight: FontWeight.w900),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          bisa ? 'Tanpa upload bukti transfer' : 'Kumpulkan koin lagi',
+                          style: const TextStyle(fontSize: 11, color: Color(0xFF78350f)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Center(child: Text('— ATAU —', style: TextStyle(color: Colors.grey, fontSize: 12))),
+                  const SizedBox(height: 12),
+                ],
+              );
+            },
+          ),
+
+// Submit
           ElevatedButton(
             onPressed: (_selectedProduct == null || _selectedPayment == null || _submitting)
                 ? null
