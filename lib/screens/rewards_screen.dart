@@ -43,7 +43,7 @@ class RewardsScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text('🪙 ', style: TextStyle(fontSize: 32)),
+                        const Text('💰 ', style: TextStyle(fontSize: 32)),
                         Text('$balance',
                           style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Color(0xFF78350f))),
                       ],

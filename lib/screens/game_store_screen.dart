@@ -91,7 +91,7 @@ class _GameStoreScreenState extends State<GameStoreScreen> {
               ),
               child: Row(
                 children: [
-                  const Text('🪙', style: TextStyle(fontSize: 32)),
+                  const Text('💰', style: TextStyle(fontSize: 32)),
                   const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
