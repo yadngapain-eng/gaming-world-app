@@ -26,18 +26,51 @@ class _RewardScreenState extends State<RewardScreen> {
     setState(() => _loading = true);
     try {
       final uri = Uri.parse(ADSTERRA_URL);
-      if (await canLaunchUrl(uri)) {
+
+      // Strategi: COBA LANGSUNG launch, jangan cek canLaunchUrl dulu
+      // (canLaunchUrl di Android 11+ return false tanpa <queries>)
+      bool launched = false;
+
+      // Coba mode external (buka browser lain)
+      try {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
-        // Tunggu user kembali dari iklan
-        await Future.delayed(const Duration(seconds: 8));
-        final result = await RewardService.claimAdReward();
-        if (result['ok'] == true) {
-          await _showSnack(result['message']);
-        } else {
-          await _showSnack(result['message'] ?? 'Gagal klaim', error: true);
+        launched = true;
+        debugPrint('[Ad] Launched via externalApplication');
+      } catch (e1) {
+        debugPrint('[Ad] externalApplication gagal: $e1');
+      }
+
+      // Fallback: coba platformDefault
+      if (!launched) {
+        try {
+          await launchUrl(uri, mode: LaunchMode.platformDefault);
+          launched = true;
+          debugPrint('[Ad] Launched via platformDefault');
+        } catch (e2) {
+          debugPrint('[Ad] platformDefault gagal: $e2');
         }
+      }
+
+      // Kalau dua-duanya gagal, cek canLaunchUrl untuk pesan error jelas
+      if (!launched) {
+        final can = await canLaunchUrl(uri);
+        await _showSnack(
+          can
+              ? 'Gagal buka browser. Coba lagi.'
+              : 'Tidak ada browser terinstall. Install Chrome/Firefox dulu.',
+          error: true,
+        );
+        return;
+      }
+
+      // User buka iklan — tunggu 8 detik untuk kembali
+      await Future.delayed(const Duration(seconds: 8));
+
+      final result = await RewardService.claimAdReward();
+      if (result['ok'] == true) {
+        await _showSnack(result['message']);
       } else {
-        await _showSnack('Tidak bisa buka iklan', error: true);
+        await _showSnack(result['message'] ?? 'Gagal klaim', error: true);
       }
     } catch (e) {
       await _showSnack('Error: ' + e.toString(), error: true);
