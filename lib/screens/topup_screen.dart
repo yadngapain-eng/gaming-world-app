@@ -442,20 +442,19 @@ class _TopupScreenState extends State<TopupScreen> {
         });
       });
 
-      OrderTelegramService.notifyOrder({
-        'id': orderId,
-        'userId': user.uid,
-        'item': _game!['name'],
-        'product': _selectedProduct!['name'],
-        'total': koinDibutuhkan,
-        'payment': 'Koin',
-        'koinDipakai': koinDibutuhkan,
-        'userData': _userData,
-        'status': 'success',
-      }).catchError((e) {
-        debugPrint('[Topup] notify error: $e');
-        return false;
-      });
+      try {
+        await OrderTelegramService.notifyOrder({
+          'id': orderId,
+          'userId': user.uid,
+          'item': _game!['name'],
+          'product': _selectedProduct!['name'],
+          'total': koinDibutuhkan,
+          'payment': 'Koin',
+          'koinDipakai': koinDibutuhkan,
+          'userData': _userData,
+          'status': 'success',
+        });
+      } catch (_) {}
 
       if (!mounted) return;
       showDialog(
