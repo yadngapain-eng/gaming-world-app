@@ -16,7 +16,7 @@ class RewardScreen extends StatefulWidget {
 }
 
 class _RewardScreenState extends State<RewardScreen> {
-  static const String ADSTERRA_URL = 'https://www.profitableratecpmnetwork.com/rnve2ckg?key=f15341dc4ed341cc62411d69d314d518';
+  // URL iklan diambil dari API — lihat _watchAd()
 
   bool _loading = false;
 
@@ -66,7 +66,35 @@ class _RewardScreenState extends State<RewardScreen> {
   Future<void> _watchAd() async {
     setState(() => _loading = true);
     try {
-      final uri = Uri.parse(ADSTERRA_URL);
+      // Ambil iklan dari API (auto-rotate)
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        _showSnack('Login dulu untuk tonton iklan', error: true);
+        return;
+      }
+
+      final adRes = await http.post(
+        Uri.parse('${AppConfig.apiBase}/ads/next'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'userId': user.uid}),
+      ).timeout(const Duration(seconds: 15));
+
+      final adData = jsonDecode(adRes.body);
+      if (adData['ok'] != true || adData['ad'] == null) {
+        _showSnack(adData['error'] ?? 'Tidak ada iklan tersedia', error: true);
+        return;
+      }
+
+      final adUrl = adData['ad']['url']?.toString() ?? '';
+      final adName = adData['ad']['name']?.toString() ?? 'Iklan';
+
+      if (adUrl.isEmpty) {
+        _showSnack('URL iklan tidak valid', error: true);
+        return;
+      }
+
+      debugPrint('[Ad] Show: $adName');
+      final uri = Uri.parse(adUrl);
 
       // Strategi: COBA LANGSUNG launch, jangan cek canLaunchUrl dulu
       // (canLaunchUrl di Android 11+ return false tanpa <queries>)
