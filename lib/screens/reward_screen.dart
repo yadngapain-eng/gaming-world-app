@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/reward_service.dart';
 import '../config/app_config.dart';
+import '../services/device_hash_service.dart';
 
 class RewardScreen extends StatefulWidget {
   const RewardScreen({super.key});
@@ -206,10 +207,19 @@ class _RewardScreenState extends State<RewardScreen> {
     setState(() => _loadingReferral = true);
 
     try {
+      // Ambil device hash untuk anti-fraud
+      final deviceHash = await DeviceHashService.getDeviceHash();
+      final deviceInfo = await DeviceHashService.getDeviceInfo();
+
       final res = await http.post(
         Uri.parse('${AppConfig.apiBase}/referral/apply'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'userId': user.uid, 'code': code}),
+        body: jsonEncode({
+          'userId': user.uid,
+          'code': code,
+          'deviceHash': deviceHash,
+          'deviceInfo': deviceInfo,
+        }),
       ).timeout(const Duration(seconds: 15));
 
       final data = jsonDecode(res.body);
