@@ -24,6 +24,7 @@ class _RewardScreenState extends State<RewardScreen> {
   int _referralEarned = 0;
   bool _loadingReferral = false;
   bool _referralUsed = false;
+  List<Map<String, dynamic>> _referralAchievements = [];
   String? _referredBy;
   List<Map<String, dynamic>> _referralList = [];
   final _referralController = TextEditingController();
@@ -38,6 +39,18 @@ class _RewardScreenState extends State<RewardScreen> {
   void dispose() {
     _referralController.dispose();
     super.dispose();
+  }
+
+  String _fmtRupiah(dynamic n) {
+    try {
+      final v = (n ?? 0).toInt();
+      return v.toString().replaceAllMapped(
+        RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+        (m) => m[1]! + '.',
+      );
+    } catch (_) {
+      return n.toString();
+    }
   }
 
   Future<void> _showSnack(String msg, {bool error = false}) async {
@@ -142,6 +155,9 @@ class _RewardScreenState extends State<RewardScreen> {
             _referralEarned = data['referralEarned'] ?? 0;
             _referralUsed = data['referralUsed'] == true;
             _referredBy = data['referredBy'];
+            _referralAchievements = List<Map<String, dynamic>>.from(
+              data['referralAchievements'] ?? []
+            );
           });
         }
       }
@@ -392,6 +408,102 @@ class _RewardScreenState extends State<RewardScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 16),
+                ],
+
+                // Achievement section
+                if (_referralAchievements.isNotEmpty) ...[
+                  const Text('\u{1F3C6} Achievement',
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+                  const SizedBox(height: 8),
+                  ..._referralAchievements.map((a) {
+                    final earned = a['earned'] == true;
+                    final progress = (a['progress'] ?? 0) as int;
+                    final target = (a['target'] ?? 10) as int;
+                    final percent = ((a['progressPercent'] ?? 0) as num) / 100.0;
+                    final reward = (a['reward'] ?? 0) as int;
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: earned
+                            ? Colors.green.withOpacity(0.1)
+                            : Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: earned
+                              ? Colors.green.withOpacity(0.5)
+                              : Colors.grey.shade300,
+                          width: earned ? 2 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Text(a['icon']?.toString() ?? '\u{1F3C6}',
+                              style: const TextStyle(fontSize: 24)),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        a['title']?.toString() ?? 'Achievement',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 12,
+                                          color: earned
+                                              ? Colors.green[800]
+                                              : Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                    if (earned)
+                                      const Icon(Icons.check_circle,
+                                          color: Colors.green, size: 16),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '$progress / $target teman',
+                                  style: const TextStyle(
+                                      fontSize: 10, color: Colors.grey),
+                                ),
+                                const SizedBox(height: 4),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: LinearProgressIndicator(
+                                    value: percent,
+                                    minHeight: 4,
+                                    backgroundColor: Colors.grey.shade300,
+                                    valueColor: AlwaysStoppedAnimation(
+                                      earned
+                                          ? Colors.green
+                                          : const Color(0xFF7c3aed),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '+${_fmtRupiah(reward)} koin',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: earned
+                                        ? Colors.green
+                                        : const Color(0xFF7c3aed),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
                   const SizedBox(height: 16),
                 ],
 
