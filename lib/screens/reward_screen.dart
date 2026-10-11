@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/reward_service.dart';
 import '../config/app_config.dart';
+import '../utils/material_icon_helper.dart';
 import '../services/device_hash_service.dart';
 
 class RewardScreen extends StatefulWidget {
@@ -448,8 +449,14 @@ class _RewardScreenState extends State<RewardScreen> {
                       ),
                       child: Row(
                         children: [
-                          Text(a['icon']?.toString() ?? '\u{1F3C6}',
-                              style: const TextStyle(fontSize: 24)),
+                          Icon(
+                            MaterialIconHelper.getIcon(
+                              a['icon']?.toString(),
+                              fallback: Icons.emoji_events,
+                            ),
+                            color: earned ? Colors.amber[700] : Colors.grey[600],
+                            size: 28,
+                          ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Column(

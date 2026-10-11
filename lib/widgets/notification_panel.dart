@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/in_app_notification_service.dart';
+import '../utils/material_icon_helper.dart';
 
 class NotificationPanel extends StatefulWidget {
   const NotificationPanel({super.key});
@@ -115,8 +116,14 @@ class _NotificationPanelState extends State<NotificationPanel> {
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Center(
-                                    child: Text(n.icon,
-                                        style: const TextStyle(fontSize: 20)),
+                                    child: Icon(
+                                      MaterialIconHelper.getIcon(
+                                        n.icon,
+                                        fallback: MaterialIconHelper.getIcon(n.type),
+                                      ),
+                                      color: color,
+                                      size: 22,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 12),
