@@ -45,7 +45,7 @@ class MainMenuSheet {
                 Navigator.pop(ctx);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const AchievementScreen()));
               }),
-              _menuItem(ctx, '💬', 'Chat AI', 'Tanya apa saja', () {
+              _menuItem(ctx, '💬', 'Your AI', 'Tanya apa saja', () {
                 Navigator.pop(ctx);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatScreen()));
               }),

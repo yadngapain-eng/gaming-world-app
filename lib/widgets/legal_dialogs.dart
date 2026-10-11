@@ -55,7 +55,7 @@ class LegalDialogs {
           '7. Order diproses dalam 1-5 menit\n\n'
           'Metode Pembayaran:\n'
           'SEABANK, GoPay, DANA, OVO, ShopeePay, QRIS\n\n'
-          'Butuh bantuan? Chat kami via tombol Chat AI di halaman utama.',
+          'Butuh bantuan? Chat kami via tombol Your AI di halaman utama.',
     );
   }
 

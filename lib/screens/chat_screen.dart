@@ -100,7 +100,7 @@ class _ChatScreenState extends State<ChatScreen> {
         title: const Row(
           children: [
             Text('\u{1F916} ', style: TextStyle(fontSize: 20)),
-            Text('Chat AI'),
+            Text('Your AI'),
           ],
         ),
         backgroundColor: const Color(0xFF7c3aed),
