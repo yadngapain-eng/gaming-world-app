@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../services/app_update_service.dart';
+import '../widgets/update_dialog.dart';
 import '../services/auth_service.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -38,7 +40,19 @@ class _SplashScreenState extends State<SplashScreen>
 
     _animController.forward();
 
-    Future.delayed(const Duration(seconds: 3), () {
+    Future.delayed(const Duration(seconds: 3), () async {
+      if (!mounted) return;
+
+      // Cek update APK dulu
+      final updateInfo = await AppUpdateService.checkUpdate();
+      if (updateInfo != null && mounted) {
+        await showDialog(
+          context: context,
+          barrierDismissible: updateInfo['mandatory'] != true,
+          builder: (_) => UpdateDialog(updateInfo: updateInfo),
+        );
+      }
+
       if (!mounted) return;
       final auth = context.read<AuthService>();
       Navigator.pushReplacementNamed(context, auth.isLoggedIn ? '/home' : '/login');
