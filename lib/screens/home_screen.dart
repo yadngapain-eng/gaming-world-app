@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/firestore_service.dart';
+import '../widgets/notification_bell.dart';
+import '../services/notification_service.dart';
 import '../services/reward_service.dart';
 import '../services/topup_service.dart';
 import '../models/game_model.dart';
@@ -60,6 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
+          const NotificationBell(),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _refresh,
