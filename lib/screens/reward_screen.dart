@@ -26,7 +26,6 @@ class _RewardScreenState extends State<RewardScreen> {
   bool _loadingReferral = false;
   bool _referralUsed = false;
   List<Map<String, dynamic>> _referralAchievements = [];
-  String? _referredBy;
   List<Map<String, dynamic>> _referralList = [];
   final _referralController = TextEditingController();
 
@@ -155,7 +154,6 @@ class _RewardScreenState extends State<RewardScreen> {
             _referralCount = data['referralCount'] ?? 0;
             _referralEarned = data['referralEarned'] ?? 0;
             _referralUsed = data['referralUsed'] == true;
-            _referredBy = data['referredBy'];
             _referralAchievements = List<Map<String, dynamic>>.from(
               data['referralAchievements'] ?? []
             );

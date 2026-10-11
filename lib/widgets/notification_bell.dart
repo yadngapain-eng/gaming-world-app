@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/notification_service.dart';
+import '../services/in_app_notification_service.dart';
 import 'notification_panel.dart';
 
 class NotificationBell extends StatefulWidget {
